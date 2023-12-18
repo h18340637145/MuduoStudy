@@ -46,7 +46,7 @@ void unlock()
     pthread_mutex_unlock(&mutex_);
 }
 ```
-使用lock函数便保存所属线程的tid，解锁便将holder_设置为0。muduo的MutexLock 设计为“不可重入锁”，从析构函数中可以看到，该断言一定要保证unlock函数被调用后才会销毁锁，所以holder_会在unlock函数中被赋值为0。至于为什么需要在调用pthread_mutex_unlock前设置holder_=0，可先看析构函数，析构函数中首先断言holder是否为0，这意味着当前锁只有在没有其他线程使用时才会被析构，否则出错。再回到unlock函数，由于前面使用了lock函数加锁，所以调用unlock时，holder变量是安全的，在解锁前将其设置为0;假设holder变量在解锁后再设置为0，那么该holder变量可能来不及设置为零就被其他线程占用了，所以这样做的目的是为了保证当前的Mutex只被当前线程使用（独占）。
+使用lock函数便保存所属线程的tid，解锁便将holder_设置为0。muduo的MutexLock 设计为“不可重入锁”，从析构函数中可以看到，该断言一定要保证unlock函数被调用后才会销毁锁，所以holder_会在unlock函数中被赋值为0。至于为什么需要在调用pthread_mutex_unlock前设置holder_=0，可先看析构函数，析构函数中首先断言holder是否为0，这意味着当前锁只有在没有其他线程使用时才会被析构，否则出错。再回到unlock函数，由于前面使用了lock函数加锁，所以调用unlock时，holder变量是安全的，在解锁前将其设置为0;假设holder变量在解锁后再设置为0，那么该holder变量可能来不及设置为零就被其他线程占用了，所以这样做的目的是为了保证当前的Mutex只被当前线程使用（独占）。  （锁必须解除才能释放）
 
 ### 三、MutexLockGuard
 
